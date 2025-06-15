@@ -1,10 +1,11 @@
 import { ImageUploader } from "@/app/components/image-uploader";
 
-export default function ExperiencePage({
+export default async function ExperiencePage({
   params,
 }: {
-  params: { experienceId: string };
+  params: Promise<{ experienceId: string }>;
 }) {
+  const { experienceId } = await params;
   return (
     <main className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto">
@@ -13,7 +14,7 @@ export default function ExperiencePage({
           Upload an image and let our AI transform it into a beautiful artistic
           version while maintaining the main subject.
         </p>
-        <ImageUploader experienceId={params.experienceId} />
+        <ImageUploader experienceId={experienceId} />
       </div>
     </main>
   );

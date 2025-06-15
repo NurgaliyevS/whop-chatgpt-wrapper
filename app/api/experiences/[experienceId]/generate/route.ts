@@ -4,10 +4,11 @@ import sharp from "sharp";
 
 export async function POST(
   request: Request,
-  { params }: { params: { experienceId: string } }
+  { params }: { params: Promise<{ experienceId: string }> }
 ) {
   console.log("=== Starting Alt Text Generation Request ===");
-  const { experienceId } = await Promise.resolve(params);
+  // Await the params in Next.js 15
+  const { experienceId } = await params;
   console.log("Request params:", JSON.stringify({ experienceId }, null, 2));
 
   // Get the user's API key from the request headers

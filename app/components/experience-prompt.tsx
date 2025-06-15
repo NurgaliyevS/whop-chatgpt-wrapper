@@ -1,7 +1,7 @@
 import type { AccessLevel } from "@whop/api";
 import Link from "next/link";
-import ImageUploader from "./image-uploader";
-import { Button } from "./ui/button";
+import { ImageUploader } from "@/app/components/image-uploader";
+import { Button } from "@/app/components/ui/button";
 
 export default function ExperiencePrompt({
   prompt,

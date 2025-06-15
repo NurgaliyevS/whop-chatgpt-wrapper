@@ -114,7 +114,7 @@ export async function POST(
     const whopExperience = await whopSdk.experiences.getExperience({
       experienceId,
     });
-    const companyId = whopExperience.experience.company.id;
+    const companyId = whopExperience.company.id;
 
     const generatedAttachmentId = uploadResponse.directUploadId;
     const originalAttachmentId = originalFileUploadResponse.directUploadId;
@@ -124,11 +124,11 @@ export async function POST(
       name: "AI Uploads",
     });
 
-    const forumId = forum.createForum?.id;
+    const forumId = forum?.id;
 
     const post = await whopSdk.forums.createForumPost({
       forumExperienceId: forumId,
-      content: `@${publicUser.publicUser?.username} generated this image with the prompt: "${experience.prompt}"\n\nTry it yourself here: https://whop.com/hub/${companyId}/${experience.id}/app\n\nBefore vs After ⬇️`,
+      content: `@${publicUser.username} generated this image with the prompt: "${experience.prompt}"\n\nTry it yourself here: https://whop.com/hub/${companyId}/${experience.id}/app\n\nBefore vs After ⬇️`,
       attachments: [
         { directUploadId: originalAttachmentId },
         { directUploadId: generatedAttachmentId },
