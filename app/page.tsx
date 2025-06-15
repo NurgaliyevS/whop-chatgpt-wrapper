@@ -10,7 +10,7 @@ export default function Page() {
           <Settings />
         </div>
         <p className="text-gray-600 mb-8">
-          Automatically generate alt text for images in over 130 languages.
+          Automatically generate alt text for images.
         </p>
         <ImageUploader experienceId="default" />
       </div>
