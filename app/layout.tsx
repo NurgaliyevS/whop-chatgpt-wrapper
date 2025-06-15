@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "AI Image Generator",
-  description: "Transform your images with AI",
+  title: "Alt Text Generator",
+  description: "Generate descriptive alt text for your images using AI",
 };
 
 export default function RootLayout({

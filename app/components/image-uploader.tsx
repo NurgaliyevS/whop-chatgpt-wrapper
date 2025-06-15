@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/app/components/ui/button";
 import gsap from "gsap";
 import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import Image from "next/image";
@@ -403,8 +403,21 @@ function Loader() {
 
 export function ImageUploader({ experienceId }: { experienceId: string }) {
   const [isLoading, setIsLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [altText, setAltText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  const copyToClipboard = async () => {
+    if (!altText) return;
+
+    try {
+      await navigator.clipboard.writeText(altText);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -413,6 +426,7 @@ export function ImageUploader({ experienceId }: { experienceId: string }) {
 
       setIsLoading(true);
       setError(null);
+      setAltText(null);
 
       try {
         const formData = new FormData();
@@ -427,11 +441,11 @@ export function ImageUploader({ experienceId }: { experienceId: string }) {
         );
 
         if (!response.ok) {
-          throw new Error("Failed to generate image");
+          throw new Error("Failed to generate alt text");
         }
 
         const data = await response.json();
-        setImageUrl(data.imageUrl);
+        setAltText(data.altText);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -480,15 +494,51 @@ export function ImageUploader({ experienceId }: { experienceId: string }) {
         </div>
       )}
 
-      {imageUrl && (
-        <div className="mt-4">
-          <Image
-            src={imageUrl}
-            alt="Generated image"
-            width={512}
-            height={512}
-            className="rounded-lg"
-          />
+      {altText && (
+        <div className="mt-8 p-6 bg-gray-50 rounded-lg">
+          <div className="flex justify-between items-start mb-4">
+            <p className="text-gray-700 whitespace-pre-wrap flex-1">
+              {altText}
+            </p>
+            <Button
+              onClick={copyToClipboard}
+              variant="outline"
+              className="ml-4 flex-shrink-0"
+              title={copySuccess ? "Copied!" : "Copy to clipboard"}
+            >
+              {copySuccess ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-green-500"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                </svg>
+              )}
+            </Button>
+          </div>
         </div>
       )}
     </div>
