@@ -7,10 +7,6 @@ import sharp from "sharp";
 
 const prisma = new PrismaClient();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ experienceId: string }> }
@@ -60,6 +56,22 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    // Get the request body to extract the API key
+    const body = await request.json();
+    const apiKey = body.apiKey;
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "OpenAI API key is required" },
+        { status: 400 }
+      );
+    }
+
+    // Initialize OpenAI with the provided API key
+    const openai = new OpenAI({
+      apiKey: apiKey,
+    });
 
     const originalFile = new File(
       [
