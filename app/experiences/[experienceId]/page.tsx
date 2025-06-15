@@ -1,47 +1,50 @@
+import ExperiencePrompt from "@/components/experience-prompt";
 import { whopSdk } from "@/lib/whop-sdk";
+import { PrismaClient } from "@prisma/client";
 import { headers } from "next/headers";
 
+const prisma = new PrismaClient();
+
+async function findOrCreateExperience(experienceId: string) {
+  let experience = await prisma.experience.findUnique({
+    where: { id: experienceId },
+  });
+
+  if (!experience) {
+    experience = await prisma.experience.create({
+      data: {
+        id: experienceId,
+        prompt: "",
+      },
+    });
+  }
+
+  return experience;
+}
+
 export default async function ExperiencePage({
-	params,
+  params,
 }: {
-	params: Promise<{ experienceId: string }>;
+  params: Promise<{ experienceId: string }>;
 }) {
-	// The headers contains the user token
-	const headersList = await headers();
+  const headersList = await headers();
+  const { userId } = await whopSdk.verifyUserToken(headersList);
 
-	// The experienceId is a path param
-	const { experienceId } = await params;
+  const { experienceId } = await params;
+  const experience = await findOrCreateExperience(experienceId);
 
-	// The user token is in the headers
-	const { userId } = await whopSdk.verifyUserToken(headersList);
+  const hasAccess = await whopSdk.access.checkIfUserHasAccessToExperience({
+    userId,
+    experienceId,
+  });
 
-	const result = await whopSdk.access.checkIfUserHasAccessToExperience({
-		userId,
-		experienceId,
-	});
-
-	const user = await whopSdk.users.getUser({ userId });
-	const experience = await whopSdk.experiences.getExperience({ experienceId });
-
-	// Either: 'admin' | 'customer' | 'no_access';
-	// 'admin' means the user is an admin of the whop, such as an owner or moderator
-	// 'customer' means the user is a common member in this whop
-	// 'no_access' means the user does not have access to the whop
-	const { accessLevel } = result;
-
-	return (
-		<div className="flex justify-center items-center h-screen px-8">
-			<h1 className="text-xl">
-				Hi <strong>{user.name}</strong>, you{" "}
-				<strong>{result.hasAccess ? "have" : "do not have"} access</strong> to
-				this experience. Your access level to this whop is:{" "}
-				<strong>{accessLevel}</strong>. <br />
-				<br />
-				Your user ID is <strong>{userId}</strong> and your username is{" "}
-				<strong>@{user.username}</strong>.<br />
-				<br />
-				You are viewing the experience: <strong>{experience.name}</strong>
-			</h1>
-		</div>
-	);
+  return (
+    <div className="flex flex-col gap-4 p-4 h-screen items-center justify-center">
+      <ExperiencePrompt
+        prompt={experience.prompt}
+        accessLevel={hasAccess.accessLevel}
+        experienceId={experienceId}
+      />
+    </div>
+  );
 }
