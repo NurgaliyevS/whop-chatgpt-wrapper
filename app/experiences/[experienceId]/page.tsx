@@ -1,4 +1,5 @@
 import { ImageUploader } from "@/app/components/image-uploader";
+import { Settings } from "@/app/components/settings";
 
 export default async function ExperiencePage({
   params,
@@ -9,10 +10,12 @@ export default async function ExperiencePage({
   return (
     <main className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">AI Image Generator</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">AI Alt Text Generator</h1>
+          <Settings />
+        </div>
         <p className="text-gray-600 mb-8">
-          Upload an image and let our AI transform it into a beautiful artistic
-          version while maintaining the main subject.
+          Automatically generate alt text for images.
         </p>
         <ImageUploader experienceId={experienceId} />
       </div>
