@@ -432,16 +432,23 @@ export function ImageUploader({ experienceId }: { experienceId: string }) {
         const formData = new FormData();
         formData.append("file", file);
 
+        // Get the user's API key from localStorage
+        const userApiKey = localStorage.getItem("openai_api_key");
+
         const response = await fetch(
           `/api/experiences/${experienceId}/generate`,
           {
             method: "POST",
             body: formData,
+            headers: {
+              ...(userApiKey && { "x-openai-api-key": userApiKey }),
+            },
           }
         );
 
         if (!response.ok) {
-          throw new Error("Failed to generate alt text");
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to generate alt text");
         }
 
         const data = await response.json();

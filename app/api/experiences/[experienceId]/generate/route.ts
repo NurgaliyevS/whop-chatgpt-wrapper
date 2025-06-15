@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import sharp from "sharp";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(
   request: Request,
   { params }: { params: { experienceId: string } }
@@ -13,7 +9,30 @@ export async function POST(
   console.log("=== Starting Alt Text Generation Request ===");
   const { experienceId } = await Promise.resolve(params);
   console.log("Request params:", JSON.stringify({ experienceId }, null, 2));
-  console.log("OpenAI API Key exists:", !!process.env.OPENAI_API_KEY);
+
+  // Get the user's API key from the request headers
+  const userApiKey = request.headers.get("x-openai-api-key");
+  const apiKey = userApiKey;
+
+  console.log(
+    "Using API Key:",
+    userApiKey ? "User provided" : "Environment variable"
+  );
+
+  if (!apiKey) {
+    console.log("Error: No API key available");
+    return NextResponse.json(
+      {
+        error:
+          "No API key available. Please add your OpenAI API key in settings.",
+      },
+      { status: 401 }
+    );
+  }
+
+  const openai = new OpenAI({
+    apiKey,
+  });
 
   try {
     console.log("Experience ID:", experienceId);
