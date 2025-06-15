@@ -401,164 +401,94 @@ function Loader() {
   );
 }
 
-export default function ImageUploader({
-  experienceId,
-}: {
-  experienceId: string;
-}) {
-  const [image, setImage] = useState<{
-    file: File;
-    preview: string;
-  } | null>(null);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+export function ImageUploader({ experienceId }: { experienceId: string }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Clean up the object URL when the image is changed
-  useEffect(() => {
-    const objectUrl = image?.preview;
-    if (objectUrl) {
-      return () => {
-        URL.revokeObjectURL(objectUrl);
-      };
-    }
-  }, [image?.preview]);
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      if (!file) return;
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setImage({
-        file,
-        preview: URL.createObjectURL(file),
-      });
-    }
-  }, []);
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(
+          `/api/experiences/${experienceId}/generate`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to generate image");
+        }
+
+        const data = await response.json();
+        setImageUrl(data.imageUrl);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [experienceId]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "image/*": [".jpeg", ".jpg", ".png", ".gif"],
+      "image/*": [".png", ".jpg", ".jpeg"],
     },
     maxFiles: 1,
   });
 
-  const handleUpload = async () => {
-    if (!image) return;
-    try {
-      const response = await fetch(
-        `/api/experiences/${experienceId}/generate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: image.file,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to get upload URL");
-      }
-
-      const data = await response.json();
-      setGeneratedImage(data.imageUrl);
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      throw error;
-    }
-  };
-
-  const handleGenerate = async () => {
-    if (!image) return;
-    setIsGenerating(true);
-    setUploadProgress(0);
-    try {
-      await handleUpload();
-    } catch (error) {
-      console.error("Error generating image:", error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleReset = () => {
-    setImage(null);
-    setGeneratedImage(null);
-    setUploadProgress(0);
-  };
-
-  if (isGenerating) {
-    return (
-      <div className="w-full max-w-2xl mx-auto p-4 space-y-8">
-        <div className="w-full aspect-square flex items-center justify-center">
-          <Loader />
-        </div>
-        <div className="flex gap-4">
-          <Button onClick={handleReset} variant="outline" className="flex-1">
-            Cancel
-          </Button>
-          <Button disabled className="flex-1">
-            Generating...
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const displayImage = generatedImage || image?.preview;
-
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 space-y-8">
+    <div className="w-full max-w-2xl mx-auto p-4">
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-            ${
-              isDragActive
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-300 hover:border-blue-400"
-            }`}
+        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+          isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
+        }`}
       >
-        <input {...getInputProps()} capture="environment" />
-        {displayImage ? (
-          <div className="relative w-full aspect-square">
-            <Image
-              src={displayImage}
-              alt="Uploaded image"
-              fill
-              className="object-contain rounded-lg"
-            />
-          </div>
+        <input {...getInputProps()} />
+        {isLoading ? (
+          <Loader />
         ) : (
-          <div className="space-y-4">
-            <div className="text-4xl">📸</div>
-            <p className="text-gray-600">
+          <div>
+            <p className="text-lg mb-2">
               {isDragActive
-                ? "Drop the image here..."
-                : "Drag & drop an image here, or click to select"}
+                ? "Drop the image here"
+                : "Drag and drop an image here, or click to select"}
             </p>
-            <p className="text-sm text-gray-500">Supports JPG, PNG, GIF</p>
+            <p className="text-sm text-gray-500">
+              Supports PNG, JPG, JPEG up to 10MB
+            </p>
           </div>
         )}
       </div>
 
-      {image && (
-        <div className="flex flex-col gap-4">
-          {uploadProgress > 0 && uploadProgress < 100 && (
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div
-                className="bg-blue-600 h-2.5 rounded-full"
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
-          )}
-          <div className="flex gap-4">
-            <Button onClick={handleReset} variant="outline" className="flex-1">
-              Reset
-            </Button>
-            <Button onClick={handleGenerate} className="flex-1">
-              Generate Image
-            </Button>
-          </div>
+      {error && (
+        <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {imageUrl && (
+        <div className="mt-4">
+          <Image
+            src={imageUrl}
+            alt="Generated image"
+            width={512}
+            height={512}
+            className="rounded-lg"
+          />
         </div>
       )}
     </div>

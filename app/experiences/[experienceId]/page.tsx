@@ -1,50 +1,20 @@
-import ExperiencePrompt from "@/components/experience-prompt";
-import { whopSdk } from "@/lib/whop-sdk";
-import { PrismaClient } from "@prisma/client";
-import { headers } from "next/headers";
+import { ImageUploader } from "@/components/image-uploader";
 
-const prisma = new PrismaClient();
-
-async function findOrCreateExperience(experienceId: string) {
-  let experience = await prisma.experience.findUnique({
-    where: { id: experienceId },
-  });
-
-  if (!experience) {
-    experience = await prisma.experience.create({
-      data: {
-        id: experienceId,
-        prompt: "",
-      },
-    });
-  }
-
-  return experience;
-}
-
-export default async function ExperiencePage({
+export default function ExperiencePage({
   params,
 }: {
-  params: Promise<{ experienceId: string }>;
+  params: { experienceId: string };
 }) {
-  const headersList = await headers();
-  const { userId } = await whopSdk.verifyUserToken(headersList);
-
-  const { experienceId } = await params;
-  const experience = await findOrCreateExperience(experienceId);
-
-  const hasAccess = await whopSdk.access.checkIfUserHasAccessToExperience({
-    userId,
-    experienceId,
-  });
-
   return (
-    <div className="flex flex-col gap-4 p-4 h-screen items-center justify-center">
-      <ExperiencePrompt
-        prompt={experience.prompt}
-        accessLevel={hasAccess.accessLevel}
-        experienceId={experienceId}
-      />
-    </div>
+    <main className="min-h-screen p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">AI Image Generator</h1>
+        <p className="text-gray-600 mb-8">
+          Upload an image and let our AI transform it into a beautiful artistic
+          version while maintaining the main subject.
+        </p>
+        <ImageUploader experienceId={params.experienceId} />
+      </div>
+    </main>
   );
 }

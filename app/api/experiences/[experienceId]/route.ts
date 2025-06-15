@@ -2,7 +2,8 @@ import { whopSdk } from "@/lib/whop-sdk";
 import { PrismaClient } from "@prisma/client";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+
+const prisma = new PrismaClient();
 
 export async function PUT(request: Request) {
   try {
@@ -43,7 +44,7 @@ export async function PUT(request: Request) {
       },
     });
 
-    await whopSdk.notifications.sendNotification({
+    await whopSdk.notifications.sendPushNotification({
       content: prompt,
       experienceId,
       title: "Prompt updated ✨",
