@@ -1,3 +1,5 @@
-import { frostedThemePlugin } from "@whop/react/tailwind";
+const { frostedThemePlugin } = require("@whop/react/tailwind");
 
-export default { plugins: [frostedThemePlugin()] };
+module.exports = {
+  plugins: [frostedThemePlugin()],
+};
